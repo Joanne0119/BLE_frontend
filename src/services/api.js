@@ -26,3 +26,11 @@ export async function deleteTestGroup(displayName) {
   }
   return response.json();
 }
+
+export async function getChartData() {
+  const response = await fetch(`${API_BASE_URL}/chart-data`);
+  if (!response.ok) {
+    throw new Error('無法獲取圖表數據');
+  }
+  return response.json();
+}
