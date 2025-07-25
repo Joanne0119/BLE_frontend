@@ -1,21 +1,21 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import ChartView from '../views/ChartView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'chart',
+      component: ChartView,
     },
     {
-      path: '/chart',
-      name: 'chart',
+      path: '/data',
+      name: 'data',
       // route level code-splitting
-      // this generates a separate chunk (Chart.[hash].js) for this route
+      // this generates a separate chunk (Data.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import('../views/ChartView.vue'),
+      component: () => import('../views/DataView.vue'),
     },
   ],
 })

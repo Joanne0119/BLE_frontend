@@ -6,8 +6,8 @@ import { RouterLink, RouterView } from 'vue-router'
   <header>
     <div class="wrapper">
       <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/chart">Chart</RouterLink>
+        <RouterLink to="/">Chart</RouterLink>
+        <RouterLink to="/data">Data</RouterLink>
       </nav>
     </div>
   </header>
@@ -16,6 +16,9 @@ import { RouterLink, RouterView } from 'vue-router'
 </template>
 
 <style scoped>
+template {
+  background-color: #343434;
+}
 header {
   line-height: 1.5;
   max-height: 100vh;
