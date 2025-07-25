@@ -63,10 +63,27 @@ export async function deleteTestGroup(displayName) {
   }
 }
 
+export async function getAllData() {
+  try {
+    console.log('Fetching all data from:', `${API_BASE_URL}/get_all_average_rates_data`);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/get_all_average_rates_data`, {}, 15000);
+    await handleApiError(response);
+    const data = await response.json();
+    console.log('All data response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching all data:', error);
+    if (error.message === '請求超時') {
+      throw new Error('獲取所有數據超時，請檢查網路連接');
+    }
+    throw new Error(`無法獲取所有數據: ${error.message}`);
+  }
+}
+
 export async function getChartData() {
   try {
     console.log('Fetching chart data from:', `${API_BASE_URL}/chart-data`);
-    const response = await fetchWithTimeout(`${API_BASE_URL}/chart-data`, {}, 15000); // 图表数据可能较大，延长超时时间
+    const response = await fetchWithTimeout(`${API_BASE_URL}/chart-data`, {}, 15000);
     await handleApiError(response);
     const data = await response.json();
     console.log('Chart data response:', data);

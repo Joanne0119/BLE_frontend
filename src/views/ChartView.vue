@@ -426,7 +426,9 @@ watch(chartAPIData, (newData) => {
 </script>
 
 <template>
-  <div class="chart">
+  <main class="chart">
+    <h1>BLE 圖表</h1>
+
     <div v-if="isLoading" class="loading-message">
       正在載入圖表數據...
     </div>
@@ -513,13 +515,21 @@ watch(chartAPIData, (newData) => {
         沒有可顯示的圖表數據
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>
 .chart {
   padding: 1rem;
 }
+
+h1 {
+  color: #ffffff;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 1rem;
+}
+
 
 .loading-message, .error-message, .no-data-message {
   text-align: center;
