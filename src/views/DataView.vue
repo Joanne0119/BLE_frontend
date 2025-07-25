@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { getTestGroups, deleteTestGroup, getAllData } from '@/services/api';
 
 // ref() = React 的 useState()
@@ -9,28 +9,29 @@ const isLoading = ref(true);
 const error = ref(null);
 const isDeleting = ref(null); 
 
-async function fetchAllData() {
-  try {
-    // 為了更好的用戶體驗，分開控制載入狀態
-    // isLoading.value = true;
-    error.value = null;
-    allData.value = await getAllData();
-  } catch (e) {
-    error.value = e.message;
-  } finally {
-    // isLoading.value = false;
-  }
-}
+let intervalId = null;
+let lastUpdatedTime = ref(null);
 
-async function fetchTestGroups() {
+const formattedLastUpdatedTime = computed(() => {
+  if (!lastUpdatedTime.value) {
+    return '正在獲取初始資料...';
+  }
+  return `${lastUpdatedTime.value.toLocaleString('zh-TW')}`;
+});
+
+async function fetchAllDataAndTestGroups() {
   try {
-    isLoading.value = true; 
-    error.value = null;     
-    testGroups.value = await getTestGroups(); // call API
+    const [groups, data] = await Promise.all([getTestGroups(), getAllData()]);
+    testGroups.value = groups;
+    allData.value = data;
+    lastUpdatedTime.value = new Date(); 
+    error.value = null;  
   } catch (e) {
     error.value = e.message; 
   } finally {
-    isLoading.value = false; 
+    if (isLoading.value) {
+      isLoading.value = false; 
+    }
   }
 }
 
@@ -56,15 +57,22 @@ async function handleDelete(group) {
 
 // onMounted() = React 的 useEffect(..., [])
 onMounted(() => {
-  // 使用 Promise.all 同時觸發兩個 API 請求
-  Promise.all([fetchTestGroups(), fetchAllData()]);
+  fetchAllDataAndTestGroups();
+
+  intervalId = setInterval(fetchAllDataAndTestGroups, 30000);
+});
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 </script>
 
 <template>
   <main>
-    <h1>BLE 數據儀表板</h1>
-
+    <h1>全部數據</h1>
+    <div class="last-updated-time">最後更新時間：{{ formattedLastUpdatedTime }}</div>
     <div class="table-container">
       <h2>測試群組列表</h2>
       <div v-if="isLoading" class="loading-message">正在載入中...</div>
@@ -139,6 +147,11 @@ h1 {
 h2 {
   color: #ddd;
   margin-bottom: 1rem;
+}
+
+.last-updated-time {
+  margin-bottom: 1rem;
+  color: #8c8c8c;
 }
 
 .table-container {
@@ -219,8 +232,6 @@ h2 {
 
   .data-table tr {
     margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
   }
   
   .data-table tbody tr {
@@ -231,11 +242,7 @@ h2 {
     text-align: right;
     position: relative;
     padding-left: 50%; 
-    border-bottom: 1px solid #eee;
-  }
-
-  .data-table td:last-child {
-    border-bottom: 0;
+    border: 1px solid #eee;
   }
 
   .data-table td::before {

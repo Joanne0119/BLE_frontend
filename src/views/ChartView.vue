@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { getChartData } from '@/services/api';
@@ -11,6 +11,16 @@ Chart.register(ChartDataLabels);
 const chartAPIData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
+
+let intervalId = null;
+let lastUpdatedTime = ref(null);
+
+const formattedLastUpdatedTime = computed(() => {
+  if (!lastUpdatedTime.value) {
+    return '正在獲取初始資料...';
+  }
+  return `${lastUpdatedTime.value.toLocaleString('zh-TW')}`;
+});
 
 // 篩選器狀態
 const selectedTestGroups = ref([]);
@@ -386,27 +396,34 @@ const toggleShowAll = () => {
 async function fetchChartData() {
   try {
     console.log('Fetching chart data...');
-    isLoading.value = true;
-    error.value = null;
-    
     const data = await getChartData();
     console.log('Received chart data:', data);
-    chartAPIData.value = data;
-    
-    // 初始化篩選器：默認顯示所有測試組
+    chartAPIData.value = data
     showAllTests.value = true;
     selectedTestGroups.value = [];
+    lastUpdatedTime.value = new Date();
+    error.value = null;
   } catch (e) {
     console.error('Failed to fetch chart data:', e);
     error.value = e.message;
   } finally {
-    isLoading.value = false;
+    if (isLoading.value) {
+      isLoading.value = false;
+    }
   }
 }
 
 onMounted(() => {
   console.log('Component mounted, fetching data...');
   fetchChartData();
+
+  intervalId = setInterval(fetchChartData, 30000);
+});
+
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 
 // 添加 watch 來監聽數據變化
@@ -427,8 +444,8 @@ watch(chartAPIData, (newData) => {
 
 <template>
   <main class="chart">
-    <h1>BLE 圖表</h1>
-
+    <h1>圖表與比較</h1>
+    <div class="last-updated-time">最後更新時間：{{ formattedLastUpdatedTime }}</div>
     <div v-if="isLoading" class="loading-message">
       正在載入圖表數據...
     </div>
@@ -530,6 +547,10 @@ h1 {
   padding-bottom: 1rem;
 }
 
+.last-updated-time {
+  margin-bottom: 1rem;
+  color: #8c8c8c;
+}
 
 .loading-message, .error-message, .no-data-message {
   text-align: center;
