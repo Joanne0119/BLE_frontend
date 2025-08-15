@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://152.42.241.75:5000/api'; 
+const API_BASE_URL = 'https://dces.app/ble/api'; 
 
 const handleApiError = async (response) => {
   if (!response.ok) {
