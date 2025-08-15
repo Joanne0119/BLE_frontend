@@ -122,3 +122,58 @@ export async function testConnection() {
     return false;
   }
 }
+
+export async function getProfileResults() {
+  try {
+    console.log('Fetching profile results from:', `${API_BASE_URL}/profile_results`);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/profile_results`, {}, 15000);
+    
+    if (response.status === 404) {
+      console.log('Profile results not found (404), returning empty object.');
+      return {}; 
+    }
+    await handleApiError(response);
+    
+    const data = await response.json();
+    console.log('Profile results response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching profile results:', error);
+    if (error.message === '請求超時') {
+      throw new Error('獲取 Profile 結果超時，請檢查網路連接');
+    }
+    throw new Error(`無法獲取 Profile 結果: ${error.message}`);
+  }
+}
+
+export async function deleteProfileResultByGroup(deviceId, testGroupId) {
+  try {
+    console.log(`Deleting profile group: device=${deviceId}, group=${testGroupId}`);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/profile_results/${deviceId}/${testGroupId}`, {
+      method: 'DELETE',
+    });
+    await handleApiError(response);
+    const data = await response.json();
+    console.log('Delete group response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error deleting profile group:', error);
+    throw new Error(`刪除 Profile 測試組失敗: ${error.message}`);
+  }
+}
+
+export async function deleteAllProfileResultsForDevice(deviceId) {
+  try {
+    console.log(`Deleting all profile data for device: ${deviceId}`);
+    const response = await fetchWithTimeout(`${API_BASE_URL}/profile_results/${deviceId}`, {
+      method: 'DELETE',
+    });
+    await handleApiError(response);
+    const data = await response.json();
+    console.log('Delete all for device response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error deleting all profile data for device:', error);
+    throw new Error(`刪除節點所有 Profile 資料失敗: ${error.message}`);
+  }
+}

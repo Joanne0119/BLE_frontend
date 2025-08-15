@@ -14,7 +14,7 @@ let lastUpdatedTime = ref(null);
 
 const formattedLastUpdatedTime = computed(() => {
   if (!lastUpdatedTime.value) {
-    return '正在獲取初始資料...';
+    return '正在載入資料...';
   }
   return `${lastUpdatedTime.value.toLocaleString('zh-TW')}`;
 });
