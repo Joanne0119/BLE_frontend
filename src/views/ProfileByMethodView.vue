@@ -139,6 +139,7 @@ const chartOptions = {
   },
   scales: {
     y: { 
+        max: -30,
         grid: {
             color: 'rgba(255, 255, 255, 0.3)' 
         },
@@ -147,7 +148,9 @@ const chartOptions = {
             text: 'RSSI (dBm)', 
             color: '#fff'
         }, 
-        ticks: { color: '#fff' } 
+        ticks: { 
+          color: '#fff'
+        } 
     },
     x: { 
         title: { 
