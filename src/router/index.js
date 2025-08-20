@@ -21,6 +21,11 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileDashboardView.vue'),
+    },
+    {
+      path: '/profile/by-method', 
+      name: 'profile-by-method',
+      component: () => import('../views/ProfileByMethodView.vue'),
     }
   ],
 })

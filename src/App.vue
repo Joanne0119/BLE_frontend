@@ -8,8 +8,8 @@ import { RouterLink, RouterView } from 'vue-router'
       <nav>
         <RouterLink to="/">Chart</RouterLink>
         <RouterLink to="/data">Data</RouterLink>
-        <RouterLink to="/profile">Profile</RouterLink>
-        <!-- <RouterLink to="/profileChart">ProfileChart</RouterLink> -->
+        <RouterLink to="/profile/by-method">Profile Chart</RouterLink>
+        <RouterLink to="/profile">Profile Dashboard</RouterLink>
       </nav>
     </div>
   </header>
