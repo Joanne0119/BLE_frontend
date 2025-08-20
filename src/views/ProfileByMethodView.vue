@@ -16,6 +16,8 @@ const showAllMethods = ref(true);
 const selectedDevices = ref([]);
 const showAllDevices = ref(true);
 
+const viewMode = ref('boxplot'); // 'boxplot' or 'heatmap'
+
 const availableMethods = computed(() => {
   if (!profileData.value) return [];
   const methods = new Set();
@@ -93,6 +95,41 @@ const dynamicChartData = computed(() => {
   };
 });
 
+const heatmapData = computed(() => {
+  if (!profileData.value || filteredDevices.value.length === 0 || filteredMethods.value.length === 0) {
+    return { headers: [], rows: [], minMedian: 0, maxMedian: 0 };
+  }
+
+  let allMedians = [];
+
+  const rows = filteredDevices.value.map(deviceId => {
+    const deviceData = { deviceId, values: {} };
+    for (const method of filteredMethods.value) {
+      let allRxValues = [];
+      for (const testGroupId in profileData.value[deviceId]) {
+        if (profileData.value[deviceId][testGroupId][method]) {
+          allRxValues.push(...profileData.value[deviceId][testGroupId][method].captured_rxs.filter(v => typeof v === 'number'));
+        }
+      }
+      if (allRxValues.length > 0) {
+        const median = calculateMedian(allRxValues);
+        deviceData.values[method] = median;
+        // deviceData.values[method] = allRxValues.reduce((a, b) => a + b, 0) / allRxValues.length;
+        if (median !== null) {
+          allMedians.push(median); 
+        }
+      } else {
+        deviceData.values[method] = null;
+      }
+    }
+    return deviceData;
+  });
+  const minMedian = Math.min(...allMedians);
+  const maxMedian = Math.max(...allMedians);
+
+  return { headers: filteredMethods.value, rows, minMedian, maxMedian };
+});
+
 
 const generateColors = (keys) => {
   const baseColors = ['#e65568', '#f797a2', '#3b73db', '#3d93d4', '#29a638', '#97cc81', '#edb54c', '#ccb78f'];
@@ -102,6 +139,28 @@ const generateColors = (keys) => {
   });
   return colors;
 };
+
+function calculateMedian(arr) {
+  if (!arr || arr.length === 0) return null;
+  
+  const sorted = [...arr].sort((a, b) => a - b);
+  
+  const mid = Math.floor(sorted.length / 2);
+  
+  if (sorted.length % 2 !== 0) {
+    return sorted[mid];
+  } else {
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+}
+
+function getHeatmapColor(rssi, min, max) {
+  if (rssi === null) return '#34495e'; // 無數據
+  const percentage = (rssi - min) / (max - min);
+  const hue = percentage * 120;
+
+  return `hsl(${hue}, 70%, 60%)`;
+}
 
 const hexToRgb = (hex) => {
     if (!hex) return '0,0,0';
@@ -212,16 +271,43 @@ onMounted(() => fetchProfileData());
         </div>
       </div>
 
-      
+      <div class="view-mode-toggle">
+        <button :class="{ active: viewMode === 'boxplot' }" @click="viewMode = 'boxplot'">盒鬚圖</button>
+        <button :class="{ active: viewMode === 'heatmap' }" @click="viewMode = 'heatmap'">熱力圖</button>
+      </div>
 
       <div class="chart-container">
-        <Chart 
-          v-if="dynamicChartData.datasets.length > 0"
-          type="boxplot" 
-          :data="dynamicChartData" 
-          :options="chartOptions" 
-        />
-        <div v-else class="no-data-message">請至少選擇一個測試方法或節點 ID 以顯示圖表。</div>
+        <template v-if="viewMode === 'boxplot'">
+          <Chart 
+            v-if="dynamicChartData.datasets.length > 0"
+            type="boxplot" 
+            :data="dynamicChartData" 
+            :options="chartOptions" 
+          />
+         <div v-else class="no-data-message">請至少選擇一個測試方法或節點 ID 以顯示圖表。</div>
+        </template>
+        <template v-if="viewMode === 'heatmap'">
+          <table class="heatmap-table" v-if="heatmapData.rows.length > 0">
+            <thead>
+              <tr>
+                <th>節點 ID</th>
+                <th v-for="header in heatmapData.headers" :key="header">{{ header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in heatmapData.rows" :key="row.deviceId">
+                <td>{{ row.deviceId }}</td>
+                <td 
+                  v-for="header in heatmapData.headers" 
+                  :key="header" 
+                  :style="{ backgroundColor: getHeatmapColor(row.values[header], heatmapData.minMedian, heatmapData.maxMedian) }">
+                  {{ row.values[header] ? row.values[header].toFixed(1) : 'N/A' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="no-data-message">...</div>
+        </template>
       </div>
     </div>
   </main>
@@ -274,5 +360,47 @@ main {
     text-align: center; 
     padding: 2rem; 
     font-size: 1.2rem; 
+}
+.view-mode-toggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+.view-mode-toggle button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #555;
+  background-color: transparent;
+  color: #ddd;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+.view-mode-toggle button:hover {
+  background-color: #444;
+}
+.view-mode-toggle button.active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  font-weight: bold;
+}
+
+.heatmap-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+.heatmap-table th, .heatmap-table td {
+  border: 1px solid #555;
+  padding: 0.75rem 0.5rem;
+  text-shadow: 1px 1px 3px rgb(28, 28, 28);
+}
+.heatmap-table th {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.heatmap-table td {
+  font-weight: bold;
+  color: #fff;
+  transition: transform 0.2s;
 }
 </style>
