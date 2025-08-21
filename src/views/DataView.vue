@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { getTestGroups, deleteTestGroup, getAllData } from '@/services/api';
+import MySwal from '@/plugins/sweetalert.js';
 
 // ref() = React 的 useState()
 const testGroups = ref([]);
@@ -36,7 +37,16 @@ async function fetchAllDataAndTestGroups() {
 }
 
 async function handleDelete(group) {
-  if (!confirm(`您確定要刪除測試群組 "${group}" 嗎？此操作無法復原！`)) {
+  const result = await MySwal.fire({
+    title: `確定要刪除嗎？`,
+    text: `測試群組 "${group}" 將要被刪除，此操作無法復原！`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '是的，刪除它！',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#d14134',
+  });
+  if (!result.isConfirmed) {
     return;
   }
 
@@ -47,8 +57,20 @@ async function handleDelete(group) {
     
     await fetchAllDataAndTestGroups();
 
+    await MySwal.fire(
+      '已刪除！',
+      `測試群組 "${group}" 已被成功刪除！`,
+      'success'
+    );
+
   } catch (e) {
     error.value = `刪除失敗: ${e.message}`;
+
+    await MySwal.fire(
+      '刪除失敗',
+      e.message,
+      'error'
+    );
 
   } finally {
     isDeleting.value = null;

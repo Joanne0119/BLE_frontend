@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { getProfileResults, deleteProfileResultByGroup, deleteAllProfileResultsForDevice } from '@/services/api';
+import MySwal from '@/plugins/sweetalert.js';
 
 const profileData = ref(null); 
 const isLoading = ref(true);
@@ -41,7 +42,16 @@ async function fetchProfileData() {
 }
 
 async function handleDeleteGroup(deviceId, testGroupId) {
-  if (!confirm(`確定要刪除節點 ${deviceId} 的測試組 ${testGroupId} 的所有資料嗎？`)) {
+
+  const result = await MySwal.fire({
+    title: `確定要刪除嗎？`,
+    text: `節點 ${deviceId} 的測試組 ${testGroupId} 將要被刪除，此操作無法復原！`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '是的，刪除它！',
+    cancelButtonText: '取消',
+  });
+  if (!result.isConfirmed) {
     return;
   }
   isDeleting.value = true;
@@ -49,15 +59,33 @@ async function handleDeleteGroup(deviceId, testGroupId) {
   try {
     await deleteProfileResultByGroup(deviceId, testGroupId);
     await fetchProfileData();
+       await MySwal.fire(
+      '已刪除！',
+      `節點 ${deviceId} 的測試組 "${testGroupId}" 已被成功刪除！`,
+      'success'
+    );
   } catch (e) {
     error.value = e;
+    await MySwal.fire(
+      '刪除失敗',
+      e.message,
+      'error'
+    );
   } finally {
     isDeleting.value = false;
   }
 }
 
 async function handleDeleteAllForDevice(deviceId) {
-  if (!confirm(`確定要刪除節點 ${deviceId} 的所有 Profile 資料嗎？此操作無法復原！`)) {
+  const result = await MySwal.fire({
+    title: `確定要刪除嗎？`,
+    text: `節點 ${deviceId} 的所有 Profile 資料將要被刪除，此操作無法復原！`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '是的，刪除它！',
+    cancelButtonText: '取消',
+  });
+  if (!result.isConfirmed) {
     return;
   }
   isDeleting.value = true;
@@ -65,8 +93,18 @@ async function handleDeleteAllForDevice(deviceId) {
   try {
     await deleteAllProfileResultsForDevice(deviceId);
     await fetchProfileData();
+    await MySwal.fire(
+      '已刪除！',
+      `節點 ${deviceId} 的所有 Profile 資料已被成功刪除！`,
+      'success'
+    );
   } catch (e) {
     error.value = e;
+    await MySwal.fire(
+      '刪除失敗',
+      e.message,
+      'error'
+    );
   } finally {
     isDeleting.value = false;
   }
