@@ -50,6 +50,7 @@ async function handleDeleteGroup(deviceId, testGroupId) {
     showCancelButton: true,
     confirmButtonText: '是的，刪除它！',
     cancelButtonText: '取消',
+    confirmButtonColor: '#d14134',
   });
   if (!result.isConfirmed) {
     return;
@@ -84,6 +85,7 @@ async function handleDeleteAllForDevice(deviceId) {
     showCancelButton: true,
     confirmButtonText: '是的，刪除它！',
     cancelButtonText: '取消',
+    confirmButtonColor: '#d14134',
   });
   if (!result.isConfirmed) {
     return;
