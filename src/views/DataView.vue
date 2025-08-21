@@ -44,8 +44,8 @@ async function handleDelete(group) {
     isDeleting.value = group;
     error.value = null;
     await deleteTestGroup(group); // call API
-    // 成功刪除後，重新載入兩個數據
-    await Promise.all([fetchTestGroups(), fetchAllData()]);
+    
+    await fetchAllDataAndTestGroups();
 
   } catch (e) {
     error.value = `刪除失敗: ${e.message}`;
