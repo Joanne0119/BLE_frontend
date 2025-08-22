@@ -59,32 +59,59 @@ const dynamicChartData = computed(() => {
 
   const datasets = [];
   const colors = generateColors(filteredMethods.value);
+  // const txColor = 'rgba(231, 76, 60, 0.5)'; 
+  // const txBorderColor = '#e74c3c';
+  // const rxColor = 'rgba(52, 152, 219, 0.5)'; 
+  // const rxBorderColor = '#3498db';
 
   for (const method of filteredMethods.value) {
-    const dataForThisMethod = [];
+    const txDataForThisMethod = [];
+    const rxDataForThisMethod = [];
     
     for (const deviceId of filteredDevices.value) {
-      let allValues = []; 
+      let txValues = null;
+      let rxValues = null;
       
+      let combinedTxs = [];
+      let combinedRxs = [];
+
       if (profileData.value[deviceId]) {
         for (const testGroupId in profileData.value[deviceId]) {
           if (profileData.value[deviceId][testGroupId][method]) {
-            const resultData = profileData.value[deviceId][testGroupId][method].captured_rxs;
-            if (resultData && Array.isArray(resultData)) {
-              allValues.push(...resultData);
+            const resultData = profileData.value[deviceId][testGroupId][method];
+            if (resultData.captured_txs) {
+              combinedTxs.push(...resultData.captured_txs.filter(v => typeof v === 'number'));
+            }
+            if (resultData.captured_rxs) {
+              combinedRxs.push(...resultData.captured_rxs.filter(v => typeof v === 'number'));
             }
           }
         }
       }
 
-      dataForThisMethod.push(allValues.length > 0 ? allValues : null);
+      txValues = combinedTxs.length > 0 ? combinedTxs : null;
+      rxValues = combinedRxs.length > 0 ? combinedRxs : null;
+      
+      txDataForThisMethod.push(txValues);
+      rxDataForThisMethod.push(rxValues);
     }
 
+    const baseColor = colors[method]; // 取得該方法的基礎顏色
+    const colorRgb = hexToRgb(baseColor); // 轉換為 RGB 格式
+
     datasets.push({
-      label: method,
-      data: dataForThisMethod,
-      backgroundColor: `rgba(${hexToRgb(colors[method])}, 0.5)`,
-      borderColor: colors[method],
+      label: `${method} - Tx`, 
+      data: txDataForThisMethod,
+      backgroundColor: `rgba(${colorRgb}, 0.5)`,
+      borderColor: baseColor,
+      borderWidth: 1.5,
+    });
+    
+    datasets.push({
+      label: `${method} - Rx`,
+      data: rxDataForThisMethod,
+      backgroundColor: `rgba(${colorRgb}, 0.5)`,
+      borderColor: baseColor,
       borderWidth: 1.5,
     });
   }
@@ -97,38 +124,47 @@ const dynamicChartData = computed(() => {
 
 const heatmapData = computed(() => {
   if (!profileData.value || filteredDevices.value.length === 0 || filteredMethods.value.length === 0) {
-    return { headers: [], rows: [], minMedian: 0, maxMedian: 0 };
+    return { headers: [], rows: [], minRssi: -100, maxRssi: -30 }; // 初始值
   }
 
-  let allMedians = [];
+  let allRssiValues = [];
+
+  const headers = [];
+  for (const method of filteredMethods.value) {
+    headers.push(`${method} - Tx`);
+    headers.push(`${method} - Rx`);
+  }
 
   const rows = filteredDevices.value.map(deviceId => {
     const deviceData = { deviceId, values: {} };
     for (const method of filteredMethods.value) {
+      let allTxValues = [];
       let allRxValues = [];
-      for (const testGroupId in profileData.value[deviceId]) {
-        if (profileData.value[deviceId][testGroupId][method]) {
-          allRxValues.push(...profileData.value[deviceId][testGroupId][method].captured_rxs.filter(v => typeof v === 'number'));
+      for (const testGroupId in profileData.value?.[deviceId] || {}) {
+        const methodData = profileData.value?.[deviceId]?.[testGroupId]?.[method];
+        if (methodData?.captured_txs) {
+          allTxValues.push(...methodData.captured_txs.filter(v => typeof v === 'number'));
+        }
+        if (methodData?.captured_rxs) {
+          allRxValues.push(...methodData.captured_rxs.filter(v => typeof v === 'number'));
         }
       }
-      if (allRxValues.length > 0) {
-        const median = calculateMedian(allRxValues);
-        deviceData.values[method] = median;
-        // deviceData.values[method] = allRxValues.reduce((a, b) => a + b, 0) / allRxValues.length;
-        if (median !== null) {
-          allMedians.push(median); 
-        }
-      } else {
-        deviceData.values[method] = null;
-      }
+      const medianTx = calculateMedian(allTxValues);
+      const medianRx = calculateMedian(allRxValues);
+      deviceData.values[`${method} - Tx`] = medianTx;
+      deviceData.values[`${method} - Rx`] = medianRx;
+      if (medianTx !== null) allRssiValues.push(medianTx);
+      if (medianRx !== null) allRssiValues.push(medianRx);
     }
     return deviceData;
   });
-  const minMedian = Math.min(...allMedians);
-  const maxMedian = Math.max(...allMedians);
 
-  return { headers: filteredMethods.value, rows, minMedian, maxMedian };
+  const minRssi = Math.min(...allRssiValues, -100); 
+  const maxRssi = Math.max(...allRssiValues, -30);  
+
+  return { headers, rows, minRssi, maxRssi };
 });
+
 
 
 const generateColors = (keys) => {
@@ -155,9 +191,10 @@ function calculateMedian(arr) {
 }
 
 function getHeatmapColor(rssi, min, max) {
-  if (rssi === null) return '#34495e'; // 無數據
+  if (rssi === null || rssi === undefined) return '#34495e';
+
   const percentage = (rssi - min) / (max - min);
-  const hue = percentage * 120;
+  const hue = percentage * 190;
 
   return `hsl(${hue}, 70%, 60%)`;
 }
@@ -175,49 +212,49 @@ const chartOptions = {
     boxandwhiskers: {
       itemRadius: 2,
       
-      itemStyle: 'circle', 
-      itemBackgroundColor: 'rgba(255, 255, 255, 0.2)', 
-      itemBorderColor: 'transparent', 
+      itemStyle: 'circle',
+      itemBackgroundColor: 'rgba(0, 0, 0, 0.3)',
+      itemBorderColor: 'transparent',
 
       outlierRadius: 4,
-      outlierBackgroundColor: 'rgba(255, 255, 255, 0.2)', 
-      medianColor: '#888'                   
+      outlierBackgroundColor: 'rgba(0, 0, 0, 0.1)',
+      medianColor: '#333'
     }
   },
   plugins: {
-    legend: { position: 'top', labels: { color: '#ddd' } },
-    title: { 
-        display: true, 
-        text: 'Profile Results', 
-        color: '#ddd', 
-        font: { size: 18 } 
+    legend: { position: 'top', labels: { color: '#333' } },
+    title: {
+        display: true,
+        text: 'Profile Results',
+        color: '#333',
+        font: { size: 18 }
     },
     datalabels: {
         display: false
     },
   },
   scales: {
-    y: { 
-        max: -30,
+    y: {
+        max: -50,
         grid: {
-            color: 'rgba(255, 255, 255, 0.3)' 
+            color: 'rgba(0, 0, 0, 0.1)'
         },
-        title: { 
-            display: true, 
-            text: 'RSSI (dBm)', 
-            color: '#fff'
-        }, 
-        ticks: { 
-          color: '#fff'
-        } 
+        title: {
+            display: true,
+            text: 'RSSI (dBm)',
+            color: '#333'
+        },
+        ticks: {
+          color: '#333'
+        }
     },
-    x: { 
-        title: { 
-            display: true, 
-            text: '節點 ID', 
-            color: '#fff' 
-        }, 
-        ticks: { color: '#fff' } 
+    x: {
+        title: {
+            display: true,
+            text: '節點 ID',
+            color: '#333'
+        },
+        ticks: { color: '#333' }
         }
   }
 };
@@ -287,26 +324,29 @@ onMounted(() => fetchProfileData());
          <div v-else class="no-data-message">請至少選擇一個測試方法或節點 ID 以顯示圖表。</div>
         </template>
         <template v-if="viewMode === 'heatmap'">
-          <table class="heatmap-table" v-if="heatmapData.rows.length > 0">
-            <thead>
-              <tr>
-                <th>節點 ID</th>
-                <th v-for="header in heatmapData.headers" :key="header">{{ header }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in heatmapData.rows" :key="row.deviceId">
-                <td>{{ row.deviceId }}</td>
-                <td 
-                  v-for="header in heatmapData.headers" 
-                  :key="header" 
-                  :style="{ backgroundColor: getHeatmapColor(row.values[header], heatmapData.minMedian, heatmapData.maxMedian) }">
-                  {{ row.values[header] ? row.values[header].toFixed(1) : 'N/A' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-else class="no-data-message">...</div>
+          <div class="heatmap-container" v-if="heatmapData.rows.length > 0">
+            <table class="heatmap-table">
+              <thead>
+                <tr>
+                  <th>節點 ID</th>
+                  <th v-for="header in heatmapData.headers" :key="header">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in heatmapData.rows" :key="row.deviceId">
+                  <td>{{ row.deviceId }}</td>
+                  <td
+                    v-for="header in heatmapData.headers"
+                    :key="header"
+                    :style="{ backgroundColor: getHeatmapColor(row.values?.[header], heatmapData.minRssi, heatmapData.maxRssi) }"
+                  >
+                    {{ row.values?.[header] != null ? row.values?.[header].toFixed(1) : 'N/A' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="no-data-message">沒有可顯示的熱力圖數據。</div>
         </template>
       </div>
     </div>
@@ -315,51 +355,53 @@ onMounted(() => fetchProfileData());
 
 <style scoped>
 h1 {
-  color: #ffffff;
+  color: #333;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid #ddd;
   padding-bottom: 1rem;
 }
-main { 
-    max-width: 1600px; 
-    margin: 0 auto; 
-    padding: 2rem; 
-    color: #ddd; 
+main {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0.5rem;
+    color: #333;
+    background-color: #fff;
 }
-.filter-section { 
-    border: 1px solid #555; 
-    border-radius: 4px; 
-    padding: 1rem; 
-    margin-bottom: 2rem; 
-    background-color: rgba(255, 255, 255, 0.05); 
+.filter-section {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    background-color: #f9f9f9;
 }
 .filter-group:not(:last-child) {
   margin-bottom: 1rem;
 }
-.filter-group { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 1rem; 
-    align-items: center; 
+.filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
 }
-.filter-label { 
-    font-weight: bold; 
+.filter-label {
+    font-weight: bold;
 }
-.checkbox-item { 
-    display: flex; 
-    align-items: center; 
-    gap: 0.25rem; 
-    cursor: pointer; 
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
 }
-.chart-container { 
-    position: relative; 
-    height: 600px; 
-    width: 100%; 
+.chart-container {
+    position: relative;
+    height: 600px;
+    width: 100%;
 }
-.no-data-message { 
-    text-align: center; 
-    padding: 2rem; 
-    font-size: 1.2rem; 
+.no-data-message {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: #888;
 }
 .view-mode-toggle {
   display: flex;
@@ -369,38 +411,56 @@ main {
 }
 .view-mode-toggle button {
   padding: 0.5rem 1rem;
-  border: 1px solid #555;
-  background-color: transparent;
-  color: #ddd;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.2s;
 }
 .view-mode-toggle button:hover {
-  background-color: #444;
+  background-color: #f0f0f0;
 }
 .view-mode-toggle button.active {
   background-color: #3b82f6;
   border-color: #3b82f6;
+  color: #fff;
   font-weight: bold;
+}
+.heatmap-container {
+  width: 100%;
+  overflow-x: auto; 
 }
 
 .heatmap-table {
   width: 100%;
   border-collapse: collapse;
   text-align: center;
+  font-size: 0.85rem; 
 }
 .heatmap-table th, .heatmap-table td {
-  border: 1px solid #555;
-  padding: 0.75rem 0.5rem;
-  text-shadow: 1px 1px 3px rgb(28, 28, 28);
+  border: 1px solid #ccc;
+  padding: 0.5rem 0.4rem; 
+  text-shadow: none;
+  min-width: 80px; 
+  white-space: nowrap;
 }
 .heatmap-table th {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #f2f2f2;
 }
 .heatmap-table td {
   font-weight: bold;
-  color: #fff;
+  color: #333;
   transition: transform 0.2s;
+}
+
+@media (max-width: 768px) {
+    .heatmap-table {
+        font-size: 0.75rem; 
+    }
+    .heatmap-table th, .heatmap-table td {
+        padding: 0.4rem 0.2rem; 
+        min-width: 70px;
+    }
 }
 </style>

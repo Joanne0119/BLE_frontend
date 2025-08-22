@@ -101,7 +101,7 @@ const chartOptions = computed(() => ({
     title: {
       display: true,
       text: 'Node Reception Rate Comparison by Test Group',
-      color: 'white',
+      color: '#333',
       font: {
         size: 16
       },
@@ -136,7 +136,7 @@ const chartOptions = computed(() => ({
         font: {
           size: 12
         },
-        color: 'white',
+        color: '#333',
         generateLabels: function(chart) {
           const colors = generateColors(filteredTestGroups.value);
           const labels = [];
@@ -147,14 +147,14 @@ const chartOptions = computed(() => ({
               fillStyle: colors[group].same,
               strokeStyle: colors[group].same,
               pointStyle: 'rect',
-              fontColor: 'white'
+              fontColor: '#333'
             });
             labels.push({
               text: `${group} (Cross-Floor)`,
               fillStyle: colors[group].cross,
               strokeStyle: colors[group].cross,
               pointStyle: 'rect',
-              fontColor: 'white'
+              fontColor: '#333'
             });
           });
           
@@ -185,13 +185,13 @@ const chartOptions = computed(() => ({
       title: {
         display: true,
         text: 'Node ID',
-        color: 'white',
+        color: '#333',
         font: {
           size: 14
         }
       },
       ticks: {
-        color: 'white',
+        color: '#333',
         callback: function(value, index) {
           const label = this.getLabelForValue(value);
           return label.padStart(2, '0');
@@ -202,19 +202,19 @@ const chartOptions = computed(() => ({
       title: {
         display: true,
         text: 'Average Reception Rate (packets/sec)',
-        color: 'white',
+        color: '#333',
         font: {
           size: 14
         }
       },
       ticks: {
-        color: 'white'
+        color: '#333'
       },
       beginAtZero: true,
       grid: {
         display: true,
         drawOnChartArea: true,
-        color: 'rgba(255,255,255,0.2)'
+        color: 'rgba(0,0,0,0.1)'
       }
     },
   },
@@ -537,26 +537,28 @@ watch(chartAPIData, (newData) => {
 
 <style scoped>
 .chart {
-  padding: 1rem;
+  padding: 0.5rem;
+  background-color: #fff;
+  color: #333;
 }
 
 h1 {
-  color: #ffffff;
+  color: #333;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid #ddd;
   padding-bottom: 1rem;
 }
 
 .last-updated-time {
   margin-bottom: 1rem;
-  color: #8c8c8c;
+  color: #888;
 }
 
 .loading-message, .error-message, .no-data-message {
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
-  color: white;
+  color: #555;
 }
 
 .error-message {
@@ -584,11 +586,11 @@ h1 {
 }
 
 .filter-section {
-  border: 1px solid #555;
+  border: 1px solid #ccc;
   border-radius: 4px;
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #f9f9f9;
 }
 
 .filter-group {
@@ -602,7 +604,7 @@ h1 {
 .filter-label {
   font-weight: bold;
   margin-right: 0.5rem;
-  color: white;
+  color: #333;
 }
 
 .checkbox-item {
@@ -611,7 +613,7 @@ h1 {
   gap: 0.25rem;
   cursor: pointer;
   font-size: 0.9rem;
-  color: white;
+  color: #333;
 }
 
 .checkbox-item input[type="checkbox"] {
@@ -621,7 +623,7 @@ h1 {
 
 .filter-info {
   font-size: 0.85rem;
-  color: #ccc;
+  color: #777;
   font-style: italic;
 }
 
@@ -633,32 +635,32 @@ h1 {
 }
 
 .stat-box {
-  border: 1px solid #555;
+  border: 1px solid #ccc;
   border-radius: 4px;
   padding: 0.75rem;
   min-width: 200px;
   font-size: 0.9rem;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #f9f9f9;
 }
 
 .stat-title {
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: white;
+  color: #333;
 }
 
 .stat-content div {
   margin-bottom: 0.25rem;
-  color: #ddd;
+  color: #555;
 }
 
 .chart-container {
   position: relative;
   height: 700px;
   width: 100%;
-  border: 1px solid #555;
+  border: 1px solid #ccc;
   border-radius: 4px;
   padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: #fff;
 }
 </style>

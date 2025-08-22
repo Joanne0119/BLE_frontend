@@ -154,26 +154,27 @@ onUnmounted(() => {
 main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0.5rem;
   font-family: sans-serif;
-  color: #ddd;
+  color: #333;
+  background-color: #fff;
 }
 
 h1 {
-  color: #ffffff;
+  color: #333;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid #ddd;
   padding-bottom: 1rem;
 }
 
 h2 {
-  color: #ddd;
+  color: #444;
   margin-bottom: 1rem;
 }
 
 .last-updated-time {
   margin-bottom: 1rem;
-  color: #8c8c8c;
+  color: #888;
 }
 
 .table-container {
@@ -183,28 +184,34 @@ h2 {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 .data-table th,
 .data-table td {
   padding: 12px 15px;
   text-align: left;
-  border: 1px solid #828282;
+  border: 1px solid #ddd;
 }
 
 .data-table thead tr {
-  color: #bbb;
+  color: #333;
   font-weight: bold;
+  background-color: #f2f2f2;
 }
 
 .data-table tbody tr {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #ddd;
 }
 
 .data-table tbody tr:last-of-type {
   border-bottom: none;
 }
+
+.data-table tbody tr:nth-of-type(even) {
+    background-color: #f9f9f9;
+}
+
 
 .delete-button {
   background-color: #ef4444;
@@ -230,7 +237,6 @@ h2 {
   text-align: center;
   padding: 2rem;
   color: #777;
-  border-radius: 8px;
 }
 
 .error-message {
@@ -239,6 +245,7 @@ h2 {
   padding: 1rem;
   border-radius: 8px;
   text-align: center;
+  background-color: #f2dede;
 }
 
 /* 響應式設計：小於 768px 寬度時觸發 */
@@ -254,6 +261,7 @@ h2 {
 
   .data-table tr {
     margin-bottom: 15px;
+    border: 1px solid #ddd;
   }
   
   .data-table tbody tr {
@@ -263,18 +271,23 @@ h2 {
   .data-table td {
     text-align: right;
     position: relative;
-    padding-left: 50%; 
-    border: 1px solid #eee;
+    padding-left: 50%;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .data-table td:last-child {
+      border-bottom: 0;
   }
 
   .data-table td::before {
-    content: attr(data-label); 
+    content: attr(data-label);
     position: absolute;
     left: 15px;
     width: calc(50% - 30px);
     text-align: left;
     font-weight: bold;
-    color: #b3b3b3;
+    color: #333;
   }
 }
 </style>

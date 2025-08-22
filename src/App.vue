@@ -18,9 +18,6 @@ import { RouterLink, RouterView } from 'vue-router'
 </template>
 
 <style scoped>
-template {
-  background-color: #343434;
-}
 header {
   line-height: 1.5;
   max-height: 100vh;
@@ -51,6 +48,7 @@ nav a {
   display: inline-block;
   padding: 0 1rem;
   border-left: 1px solid var(--color-border);
+  color: #292929;
 }
 
 nav a:first-of-type {
