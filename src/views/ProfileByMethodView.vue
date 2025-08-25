@@ -16,6 +16,8 @@ const showAllMethods = ref(true);
 const selectedDevices = ref([]);
 const showAllDevices = ref(true);
 
+const selectedSignalTypes = ref(['Tx', 'Rx']);
+
 const viewMode = ref('boxplot'); // 'boxplot' or 'heatmap'
 
 const availableMethods = computed(() => {
@@ -69,9 +71,6 @@ const dynamicChartData = computed(() => {
     const rxDataForThisMethod = [];
     
     for (const deviceId of filteredDevices.value) {
-      let txValues = null;
-      let rxValues = null;
-      
       let combinedTxs = [];
       let combinedRxs = [];
 
@@ -89,31 +88,32 @@ const dynamicChartData = computed(() => {
         }
       }
 
-      txValues = combinedTxs.length > 0 ? combinedTxs : null;
-      rxValues = combinedRxs.length > 0 ? combinedRxs : null;
-      
-      txDataForThisMethod.push(txValues);
-      rxDataForThisMethod.push(rxValues);
+      txDataForThisMethod.push(combinedTxs.length > 0 ? combinedTxs : null);
+      rxDataForThisMethod.push(combinedRxs.length > 0 ? combinedRxs : null);
     }
 
     const baseColor = colors[method]; // 取得該方法的基礎顏色
     const colorRgb = hexToRgb(baseColor); // 轉換為 RGB 格式
 
-    datasets.push({
-      label: `${method} - Tx`, 
-      data: txDataForThisMethod,
-      backgroundColor: `rgba(${colorRgb}, 0.5)`,
-      borderColor: baseColor,
-      borderWidth: 1.5,
-    });
-    
-    datasets.push({
-      label: `${method} - Rx`,
-      data: rxDataForThisMethod,
-      backgroundColor: `rgba(${colorRgb}, 0.5)`,
-      borderColor: baseColor,
-      borderWidth: 1.5,
-    });
+    if(selectedSignalTypes.value.includes('Tx')) {
+      datasets.push({
+        label: `${method} - Tx`, 
+        data: txDataForThisMethod,
+        backgroundColor: `rgba(${colorRgb}, 0.5)`,
+        borderColor: baseColor,
+        borderWidth: 1.5,
+      });
+    }
+
+    if(selectedSignalTypes.value.includes('Rx')) {
+      datasets.push({
+        label: `${method} - Rx`,
+        data: rxDataForThisMethod,
+        backgroundColor: `rgba(${colorRgb}, 0.5)`,
+        borderColor: baseColor,
+        borderWidth: 1.5,
+      });
+    }
   }
 
   return {
@@ -131,8 +131,8 @@ const heatmapData = computed(() => {
 
   const headers = [];
   for (const method of filteredMethods.value) {
-    headers.push(`${method} - Tx`);
-    headers.push(`${method} - Rx`);
+    if (selectedSignalTypes.value.includes('Tx')) headers.push(`${method} - Tx`);
+    if (selectedSignalTypes.value.includes('Rx')) headers.push(`${method} - Rx`);
   }
 
   const rows = filteredDevices.value.map(deviceId => {
@@ -151,10 +151,14 @@ const heatmapData = computed(() => {
       }
       const medianTx = calculateMedian(allTxValues);
       const medianRx = calculateMedian(allRxValues);
-      deviceData.values[`${method} - Tx`] = medianTx;
-      deviceData.values[`${method} - Rx`] = medianRx;
-      if (medianTx !== null) allRssiValues.push(medianTx);
-      if (medianRx !== null) allRssiValues.push(medianRx);
+      if(selectedSignalTypes.value.includes('Tx')) {
+        deviceData.values[`${method} - Tx`] = medianTx;
+        if (medianTx !== null) allRssiValues.push(medianTx);
+      }
+      if(selectedSignalTypes.value.includes('Rx')) {
+        deviceData.values[`${method} - Rx`] = medianRx;
+        if (medianRx !== null) allRssiValues.push(medianRx);
+      }
     }
     return deviceData;
   });
@@ -168,7 +172,7 @@ const heatmapData = computed(() => {
 
 
 const generateColors = (keys) => {
-  const baseColors = ['#e65568', '#f797a2', '#3b73db', '#3d93d4', '#29a638', '#97cc81', '#edb54c', '#ccb78f'];
+  const baseColors = ['#e65568', '#f274ca', '#3b73db', '#3d93d4', '#29a638', '#b4c97b', '#edb54c', '#ccb78f'];
   const colors = {};
   keys.forEach((key, index) => {
     colors[key] = baseColors[index % baseColors.length];
@@ -306,6 +310,18 @@ onMounted(() => fetchProfileData());
             </label>
           </template>
         </div>
+
+        <div class="filter-group">
+          <label class="filter-label">訊號類型篩選：</label>
+          <label class="checkbox-item">
+            <input type="checkbox" value="Tx" v-model="selectedSignalTypes"/>
+            Tx (發射)
+          </label>
+          <label class="checkbox-item">
+            <input type="checkbox" value="Rx" v-model="selectedSignalTypes"/>
+            Rx (接收)
+          </label>
+        </div>
       </div>
 
       <div class="view-mode-toggle">
@@ -321,7 +337,7 @@ onMounted(() => fetchProfileData());
             :data="dynamicChartData" 
             :options="chartOptions" 
           />
-         <div v-else class="no-data-message">請至少選擇一個測試方法或節點 ID 以顯示圖表。</div>
+         <div v-else class="no-data-message">請至少選擇一個測試方法、節點 ID 、訊號類型以顯示圖表。</div>
         </template>
         <template v-if="viewMode === 'heatmap'">
           <div class="heatmap-container" v-if="heatmapData.rows.length > 0">
