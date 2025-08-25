@@ -99,7 +99,7 @@ const dynamicChartData = computed(() => {
       datasets.push({
         label: `${method} - Tx`, 
         data: txDataForThisMethod,
-        backgroundColor: `rgba(${colorRgb}, 0.5)`,
+        backgroundColor: `rgba(${colorRgb}, 0.3)`,
         borderColor: baseColor,
         borderWidth: 1.5,
       });
@@ -109,7 +109,7 @@ const dynamicChartData = computed(() => {
       datasets.push({
         label: `${method} - Rx`,
         data: rxDataForThisMethod,
-        backgroundColor: `rgba(${colorRgb}, 0.5)`,
+        backgroundColor: `rgba(${colorRgb}, 0.8)`,
         borderColor: baseColor,
         borderWidth: 1.5,
       });
