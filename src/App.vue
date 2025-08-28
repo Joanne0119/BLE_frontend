@@ -9,6 +9,7 @@ import { RouterLink, RouterView } from 'vue-router'
         <RouterLink to="/">Chart</RouterLink>
         <RouterLink to="/data">Data</RouterLink>
         <RouterLink to="/profile/by-method">Profile Chart</RouterLink>
+        <RouterLink to="/profile/ranking">Profile Ranking</RouterLink>
         <RouterLink to="/profile">Profile Dashboard</RouterLink>
       </nav>
     </div>

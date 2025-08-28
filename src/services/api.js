@@ -177,3 +177,14 @@ export async function deleteAllProfileResultsForDevice(deviceId) {
     throw new Error(`刪除節點所有 Profile 資料失敗: ${error.message}`);
   }
 }
+
+export async function getRankings() {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/rankings`);
+    await handleApiError(response);
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching rankings:', error);
+    throw new Error(`無法獲取排名: ${error.message}`);
+  }
+}
