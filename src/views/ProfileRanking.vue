@@ -27,7 +27,7 @@ onMounted(() => {
 
 <template>
   <main>
-    <h1>Profile 分析</h1>
+    <h1>Profile  評分排名</h1>
     <div v-if="isLoading" class="loading-message">正在計算排名...</div>
     <div v-else-if="error" class="error-message">分析失敗：{{ error.message }}</div>
     <div v-else-if="rankedNodes.length > 0">
